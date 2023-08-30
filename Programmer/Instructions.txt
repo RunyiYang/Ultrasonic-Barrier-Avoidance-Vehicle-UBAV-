@@ -1,0 +1,49 @@
+注意事项
+1.由于超声波探测器的探测角度有限，左右探测范围大概在45度左右。因此，在使用本产品时，在超声波探测器的探测角度之外的障碍物不能够被探测，也不能进行避障。
+2.超声波探测器的障碍物检测范围不宜过小（小于10cm），否则系统没有响应时间去进行障碍物避障，可能发生冲撞
+3.由于电机的最高转速较快，在此转速下小车的运动速度也较快，容易发生打滑情况，偏离航道。因此，在最高状态下应该尽量使用手动控制，时刻监视小车的运动，防止发生冲撞。
+4.上位机的数据获取周期不宜过短，否则会导致数据传输不完全，产生数据丢失的现象。
+5.本系统具有两套电池供电系统，分别为航模电池供电的点击系统和电池组供电的单片机系统，应该对两套电源系统进行监测，保证供电电压正常。
+
+上位机软件的版本配置
+Labview 2018
+Labview运行环境电脑配置：
+CPU:Intel Core i7-8750H
+Operate System:windows 10
+内存大小:16GB
+硬盘大小:1024GB
+
+下位机软件的版本配置
+Keil5
+Keil5运行环境电脑配置：
+CPU:Intel Core i7 9th Gen
+Operate System:windows 10
+内存大小:16GB
+硬盘大小:1024GB
+
+
+
+------------------------------------------------------------------------------------
+
+Cautions
+1. Due to the limited detection angle of the ultrasonic detector, the left and right detection range is about 45 degrees. Therefore, when using this product, obstacles outside the detection angle of the ultrasonic detector cannot be detected and obstacle avoidance cannot be performed.
+2. The obstacle detection range of the ultrasonic detector should not be too small (less than 10cm), otherwise the system does not have the response time for obstacle avoidance, and collision may occur.
+3. As the maximum speed of the motor is faster, the movement speed of the trolley under this speed is also faster, which is prone to skidding and deviation from the course. Therefore, manual control should be used as much as possible in the highest state, and the movement of the trolley should be monitored at all times to prevent collision.
+4. The data acquisition cycle of the upper computer should not be too short, otherwise it will lead to incomplete data transmission and data loss.
+5. This system has two sets of battery power supply systems, respectively, the click system powered by the aeromodelling battery and the battery pack-powered microcontroller system, and the two power supply systems should be monitored to ensure that the supply voltage is normal.
+
+Version configuration of the upper computer software
+Labview 2018
+Labview running environment computer configuration:
+CPU:Intel Core i7-8750H
+Operate System:windows 10
+Memory size:16GB
+Hard disk size:1024GB
+
+The version of the software configuration of the lower computer
+Keil5
+Keil5 running environment computer configuration:
+CPU:Intel Core i7 9th Gen
+Operate System:windows 10
+Memory size:16GB
+Hard Disk Size:1024GB

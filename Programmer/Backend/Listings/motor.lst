@@ -1,0 +1,258 @@
+C51 COMPILER V9.54   MOTOR                                                                 12/22/2021 18:33:06 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MOTOR
+OBJECT MODULE PLACED IN .\Objects\motor.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE motor.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\motor
+                    -.lst) TABS(2) OBJECT(.\Objects\motor.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include "motor.h"
+   3          #include "serial.h"
+   4          
+   5          unsigned int dis_count = 0;     //计数
+   6          
+   7          unsigned char tmp, dat, flat;  
+   8          unsigned int num, c = 0;
+   9          unsigned int speed = 0;
+  10          extern uchar receive_data[10];
+  11          extern uint n;
+  12          char get_speed, model = 's', get_beep;
+  13            
+  14          
+  15          //static unsigned int car_statues = 5; //小车默认状态为停止
+  16          
+  17          void delay_us(unsigned int aa)
+  18          {
+  19   1        while(aa--);
+  20   1      }
+  21          
+  22          
+  23          void motor(void)
+  24          {
+  25   1        get_speed = receive_data[1];
+  26   1        if(get_speed == 'L')  //低速
+  27   1          speed = 40;
+  28   1        if(get_speed == 'M')  //中速
+  29   1          speed = 75;
+  30   1        if(get_speed == 'H')  //高速
+  31   1          speed = 100;
+  32   1          
+  33   1        model = receive_data[0];
+  34   1        if(model == 'f')  //前进
+  35   1          forward(speed);
+  36   1        if(model == 'l')  //左转
+  37   1          left(speed);
+  38   1        if(model == 'r')
+  39   1          right(speed);
+  40   1        if(model == 'b')
+  41   1          back(speed);
+  42   1        if(model == 's')
+  43   1          stop();
+  44   1      
+  45   1      //  get_beep = receive_data[2];
+  46   1      //  if(get_beep == '1') //喇叭
+  47   1      //    beep = 1;
+  48   1      //  else  beep = 0;
+  49   1      }
+  50          
+  51          
+  52          void command(){
+  53   1        
+  54   1        if( key_auto == 0)    //key_auto被按下时，后退，超声波避障模式
+C51 COMPILER V9.54   MOTOR                                                                 12/22/2021 18:33:06 PAGE 2   
+
+  55   1        {
+  56   2          delay(5);     //消抖
+  57   2          if(key_auto == 0)    //确认按键被按下
+  58   2          {
+  59   3            while(!key_auto)   //按键松开检测
+  60   3              ;
+  61   3            n = 1;       //n赋值为1，超声波避障模式
+  62   3          }   
+  63   2        }
+  64   1      
+  65   1        if(key_mannual == 0)    //key_mannual被按下时，控制模式
+  66   1        {
+  67   2          delay(5);       //消抖
+  68   2          if(key_mannual == 0)      //确认按键被按下
+  69   2          {
+  70   3            while(!key_mannual)   //按键松开检测
+  71   3              ;
+  72   3            n = 0;         //n赋值为2，控制模式
+  73   3          }       
+  74   2        }
+  75   1      }
+  76          
+  77          
+  78          
+  79          
+  80          
+  81          void left(unsigned int pwm)
+  82          {
+  83   1        enA = 1;
+  84   1        enB = 1;
+  85   1        in1 = 1;
+  86   1        in2 = 0;
+  87   1        in3 = 0;
+  88   1        in4 = 1;
+  89   1        delay_us( pwm );
+  90   1        
+  91   1        enA = 1;
+  92   1        enB = 1;
+  93   1        in1 = 0;
+  94   1        in2 = 0;
+  95   1        in3 = 0;
+  96   1        in4 = 0;
+  97   1        delay_us( 100 - pwm ); 
+  98   1      }
+  99          void l(void)
+ 100          {
+ 101   1        enA = 1;
+ 102   1        enB = 1;
+ 103   1        in1 = 1;
+ 104   1        in2 = 0;
+ 105   1        in3 = 0;
+ 106   1        in4 = 1;
+ 107   1      }
+ 108          
+ 109          
+ 110          void right(unsigned int pwm)
+ 111          {
+ 112   1        enA = 1;
+ 113   1        enB = 1;
+ 114   1        in1 = 0;
+ 115   1        in2 = 1;
+ 116   1        in3 = 1;
+C51 COMPILER V9.54   MOTOR                                                                 12/22/2021 18:33:06 PAGE 3   
+
+ 117   1        in4 = 0;
+ 118   1        delay_us( pwm );
+ 119   1        
+ 120   1        enA = 1;
+ 121   1        enB = 1;
+ 122   1        in1 = 0;
+ 123   1        in2 = 0;
+ 124   1        in3 = 0;
+ 125   1        in4 = 0;
+ 126   1        delay_us( 100 - pwm ); 
+ 127   1      }
+ 128          void r(void)
+ 129          {
+ 130   1        enA = 1;
+ 131   1        enB = 1;
+ 132   1        in1 = 0;
+ 133   1        in2 = 1;
+ 134   1        in3 = 1;
+ 135   1        in4 = 0;
+ 136   1        
+ 137   1      }
+ 138          
+ 139          //小车后退
+ 140          void back(unsigned int pwm)
+ 141          {
+ 142   1        enA = 1;
+ 143   1        enB = 1;
+ 144   1        in1 = 1;
+ 145   1        in2 = 0;
+ 146   1        in3 = 1;
+ 147   1        in4 = 0;
+ 148   1        delay_us( pwm );
+ 149   1        
+ 150   1        enA = 1;
+ 151   1        enB = 1;
+ 152   1        in1 = 0;
+ 153   1        in2 = 0;
+ 154   1        in3 = 0;
+ 155   1        in4 = 0;
+ 156   1        delay_us( 100 - pwm ); 
+ 157   1      }
+ 158          void b(void)
+ 159          {
+ 160   1        enA = 1;
+ 161   1        enB = 1;
+ 162   1        in1 = 1;
+ 163   1        in2 = 0;
+ 164   1        in3 = 1;
+ 165   1        in4 = 0;
+ 166   1      }
+ 167          
+ 168          //小车前进
+ 169          void forward1(unsigned int pwm)
+ 170          {
+ 171   1        enA = 1;
+ 172   1        enB = 1;
+ 173   1        in1 = 0;
+ 174   1        in2 = 1;
+ 175   1        in3 = 0;
+ 176   1        in4 = 1;
+ 177   1        delay_us( 101*pwm );
+ 178   1        
+C51 COMPILER V9.54   MOTOR                                                                 12/22/2021 18:33:06 PAGE 4   
+
+ 179   1        enA = 1;
+ 180   1        enB = 1;
+ 181   1        in1 = 0;
+ 182   1        in2 = 0;
+ 183   1        in3 = 0;
+ 184   1        in4 = 0;
+ 185   1        delay_us( 100- pwm ); 
+ 186   1      }
+ 187          void forward(unsigned int pwm)
+ 188          {
+ 189   1        enA = 1;
+ 190   1        enB = 1;
+ 191   1        in1 = 0;
+ 192   1        in2 = 1;
+ 193   1        in3 = 0;
+ 194   1        in4 = 1;
+ 195   1        delay_us( pwm );
+ 196   1        
+ 197   1        enA = 1;
+ 198   1        enB = 1;
+ 199   1        in1 = 0;
+ 200   1        in2 = 0;
+ 201   1        in3 = 0;
+ 202   1        in4 = 0;
+ 203   1        delay_us( 100- pwm ); 
+ 204   1      }
+ 205          void f(void)
+ 206          {
+ 207   1        enA = 1;
+ 208   1        enB = 1;
+ 209   1        in1 = 0;
+ 210   1        in2 = 1;
+ 211   1        in3 = 0;
+ 212   1        in4 = 1;
+ 213   1      }
+ 214          
+ 215          //小车停止
+ 216          void stop(void)
+ 217          {
+ 218   1        enA = 1;
+ 219   1        enB = 1;
+ 220   1        in1 = 0;
+ 221   1        in2 = 0;
+ 222   1        in3 = 0;
+ 223   1        in4 = 0;
+ 224   1      }
+ 225          
+ 226          
+ 227          
+ 228          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    433    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     14    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

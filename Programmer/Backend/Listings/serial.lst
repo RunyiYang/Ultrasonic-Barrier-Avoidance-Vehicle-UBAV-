@@ -1,0 +1,135 @@
+C51 COMPILER V9.54   SERIAL                                                                12/22/2021 18:33:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE SERIAL
+OBJECT MODULE PLACED IN .\Objects\serial.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE serial.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\seri
+                    -al.lst) TABS(2) OBJECT(.\Objects\serial.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <string.h>        //字符串处理函数包
+   3          #include <intrins.h>
+   4          #include "serial.h"
+   5            
+   6          #define uint unsigned int
+   7          #define uchar unsigned char
+   8          
+   9          extern uchar receive_data[8];
+  10          extern uint bytes;
+  11          extern uint bytes_old;
+  12          
+  13          void delay(uint n)  //延时函数
+  14            
+  15          {
+  16   1        uint x,y;
+  17   1          for(x=n;x>0;x--)
+  18   1            for(y=114;y>0;y--);
+  19   1      }
+  20          
+  21          void delayt(uint x)  //延时函数
+  22          {
+  23   1          uchar j;
+  24   1          while(x-- > 0)
+  25   1          {
+  26   2                    for(j = 0;j < 125;j++)
+  27   2              {
+  28   3                ;
+  29   3              }
+  30   2          }
+  31   1      }
+  32          
+  33             /*-----------------------------------------------------------------------------
+  34             * 实 验 名    : WideMouth 51单片机字符串收发
+  35             * 实验说明  : 单片机串口收发数据控制灯亮灭
+  36             * 实验模块  : STC89C52RC单片机最小系统、HC-06蓝牙模块
+  37             * 连接方式  ：蓝牙模块RXD、TXD端分别连接单片机TXD、RXD端，蓝牙正负极连接单片机正负极
+  38             * 注    意  : 单片机晶振使用的是11.0592
+  39             *******************************************************************************/
+  40                
+  41          
+  42            /********************************************************************
+  43            * 名称 : Com_Int()
+  44            * 功能 : 串口中断函数（接受和发送数据时都会调回此函数）
+  45            ***********************************************************************/
+  46           
+  47          
+  48            
+  49                
+  50            /*******************************************************************************
+  51           * 函 数 名       : uart_init()
+  52           * 函数功能         : 初始化配置串口
+  53           * 备注          ：可直接复制
+  54           *******************************************************************************/
+C51 COMPILER V9.54   SERIAL                                                                12/22/2021 18:33:05 PAGE 2   
+
+  55           
+  56           void uart_init()                        //直接复制即可
+  57           {    
+  58   1           SCON=0X50;        //设置为工作方式1,8位数据，可变波特率
+  59   1           TMOD=0X21;        //设置计数器工作方式2
+  60   1           PCON=0X00;        //波特率不加倍
+  61   1           TH1=0XFd;        //计数器初始值设置，9600@11.0592MHz
+  62   1           TL1=0XFd;
+  63   1           TR1=1;            //打开计数器
+  64   1           ES = 1;                 //开串口中断
+  65   1           EA = 1;                 //开总中断
+  66   1       }
+  67           
+  68           /********************************************************************
+  69            * 名称 : Delay_1ms()
+  70           * 功能 : 延时子程序，延时时间为 1ms
+  71           * x * 输入 : x (单位为毫秒)
+  72           ***********************************************************************/
+  73           void Delay_1ms(uint i)    //1ms延时，直接复制即可
+  74           {
+  75   1         uint x,j;
+  76   1         for(j=0;j<i;j++)
+  77   1           for(x=0;x<=148;x++);
+  78   1       }
+  79           
+  80           /********************************************************************
+  81           * 名称 : SendChar(uchar character)
+  82           * 输入 ：单个字符
+  83           * 功能 : 发送单个字符
+  84           ***********************************************************************/
+  85           
+  86           void SendChar(uchar character)  
+  87           {     
+  88   1            SBUF=character;   //发送单个字符
+  89   1            while(!TI);TI=0; //发送完成标志 
+  90   1       }
+  91          
+  92           /********************************************************************
+  93           * 名称 : SendString(uchar String[]) 
+  94           * 功能 : 发送字符串
+  95           * 输入 ：字符串 ***********************************************************************/
+  96          
+  97           void  SendString(uchar String[]) 
+  98            { 
+  99   1             uchar *p=String;      
+ 100   1             while(*p!='#')               //若指针指向的地址为空，则跳出循环
+ 101   1           {                            
+ 102   2                  SendChar(*p); //指针第一次默认指向首地址        
+ 103   2               Delay_1ms(2);  //延时，作用为提高发送准确度         
+ 104   2                p++;       
+ 105   2           }    
+ 106   1      }
+ 107          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    163    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----       3
+   IDATA SIZE       =   ----    ----
+C51 COMPILER V9.54   SERIAL                                                                12/22/2021 18:33:05 PAGE 3   
+
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

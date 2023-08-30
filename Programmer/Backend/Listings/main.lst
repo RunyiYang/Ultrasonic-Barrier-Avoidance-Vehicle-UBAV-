@@ -1,0 +1,242 @@
+C51 COMPILER V9.54   MAIN                                                                  12/22/2021 18:33:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main.l
+                    -st) TABS(2) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <intrins.h>
+   3          #include "init.h"
+   4          #include "serial.h"
+   5          #include "eeprom.h"
+   6          #include "lcd.h"
+   7          #include "chao.h"
+   8          #include "motor.h"
+   9          #include <stdio.h>
+  10          
+  11          long int distance_set;
+  12          
+  13          uchar receive_data[10]={'s','L','0','0','0','0','0','0','\n','#'};
+  14          
+  15          uchar test[8];
+  16          uint bytes=0, n = 0;
+  17          uint bytes_old;
+  18          uchar testchar='*';
+  19          int show_flag=0;
+  20          
+  21          int i;
+  22          
+  23          extern unsigned char count;       
+  24          extern long int distance;
+  25          long int distance_buf;
+  26          
+  27          void Com_Int(void) interrupt 4
+  28            {
+  29   1            EA = 0;
+  30   1            if(RI==1)     //此句判断不能省略，否则发送数据时也会执行此语句，造成字符串错误！！！（RI为接收数据标
+             -志，当接收到数据自动置为1）
+  31   1            {
+  32   2                RI=0;
+  33   2                receive_data[bytes] = SBUF;//接收到的数据
+  34   2                bytes++;
+  35   2            }    
+  36   1            EA = 1;
+  37   1        }
+  38          
+  39          void T0_init()    //T0中断初始化
+  40          {
+  41   1        TMOD=0x21;    //定义计时器0工作方式为1
+  42   1        TL0=0x66;     //装入初始值
+  43   1        TH0=0xfc;
+  44   1        ET0=1;   //开定时器0中断
+  45   1        EA=1;    //开总中断
+  46   1      }
+  47          
+  48          void T_0() interrupt 1   //计时器中断函数T0
+  49          {
+  50   1        TF0=0;      //计时器溢出中断
+  51   1        TL0=0x66;   //填入初始数据
+  52   1        TH0=0xfc;
+  53   1        count++;    //产生一次中断就加一
+C51 COMPILER V9.54   MAIN                                                                  12/22/2021 18:33:05 PAGE 2   
+
+  54   1          if(count==18)  //当计数到达18的时候，约1s
+  55   1        {
+  56   2          TR0=0;      //关闭计时器中断0
+  57   2          TL0=0x66;   //重新装入初始值
+  58   2          TH0=0xfc;
+  59   2          count=0;    //把count清零
+  60   2        }
+  61   1      }
+  62          
+  63          
+  64          void main()    //主函数
+  65          {
+  66   1        lcd_init();    //初始化LCD
+  67   1        T0_init();     //初始化T0计时器
+  68   1        measure_init();//初始化超声波测量模块 
+  69   1        distance_set = byte_read(1);//EEPROM
+  70   1        bytes_old=0;
+  71   1        uart_init();
+  72   1        test[0]='!';
+  73   1        test[1]='#';
+  74   1        
+  75   1      
+  76   1        
+  77   1        while(1)       //循环
+  78   1        { 
+  79   2      //    SendString(test);  
+  80   2      //    receive_data[bytes]='#';     //字符串末尾加结尾标志0（对应/0）    
+  81   2            bytes_old=0; //将bytes_old、bytes置为初始化值，等待接收下一字符串
+  82   2            bytes=0;
+  83   2            command();
+  84   2            
+  85   2            if(n)
+  86   2            {
+  87   3              show_flag=!show_flag; 
+  88   3        
+  89   3              if(show_flag==0){
+  90   4                lcd_show(distance,distance_set);
+  91   4              }
+  92   3              else{
+  93   4              motor();
+  94   4              
+  95   4              if(key_up == 0)       //若范围增加开关被按下
+  96   4              {
+  97   5                delay(5);       //消抖
+  98   5                if(key_up == 0)     //确认范围增加开关被按下
+  99   5                {
+ 100   6                  if(distance_set < 500){
+ 101   7                    distance_set += 50;
+ 102   7                  }
+ 103   6                  else  distance_set = 500;
+ 104   6                  
+ 105   6                  byte_write(1, distance_set);
+ 106   6                } 
+ 107   5              }
+ 108   4            
+ 109   4              if(key_down == 0)      //若范围减小开关被按下
+ 110   4              { 
+ 111   5                delay(5);     //消抖
+ 112   5                if(key_down == 0)     //确认范围减小开关被按下
+ 113   5                {
+ 114   6                  if(distance_set > 50){
+ 115   7                    distance_set -= 50;
+C51 COMPILER V9.54   MAIN                                                                  12/22/2021 18:33:05 PAGE 3   
+
+ 116   7                  }
+ 117   6                  else  distance_set = 50;
+ 118   6                  
+ 119   6                  byte_write(1, distance_set);
+ 120   6                }   
+ 121   5              }
+ 122   4              if(receive_data[0] == '^')        //若范围增加开关被按下
+ 123   4              {
+ 124   5                if(distance_set < 500){
+ 125   6                  distance_set += 50;
+ 126   6                }
+ 127   5                else  distance_set = 500;
+ 128   5                byte_write(1, distance_set);
+ 129   5              }
+ 130   4            
+ 131   4              if(receive_data[0] == '-')       //若范围减小开关被按下
+ 132   4              { 
+ 133   5                  if(distance_set > 50){
+ 134   6                    distance_set -= 50;
+ 135   6                  }
+ 136   5                  else  distance_set = 50;
+ 137   5                  
+ 138   5                  byte_write(1, distance_set);
+ 139   5              }
+ 140   4            
+ 141   4              trigger(); //触发超声波测距   
+ 142   4              while(echo==0)//当接收端没有打开的时候在这里循环
+ 143   4                {
+ 144   5                  ;
+ 145   5                }   
+ 146   4              measure();//测量距离distance
+ 147   4              
+ 148   4              
+ 149   4              if(distance > 0 && distance <= distance_set)    //若获取的距离大于0且小于等于distance_set时
+ 150   4              {
+ 151   5                stop();
+ 152   5                delay(500);
+ 153   5                l();                //先左转
+ 154   5                receive_data[0] = 'l';
+ 155   5                receive_data[6]=distance_set/100+0x30;
+ 156   5                receive_data[7]=distance_set/10%10+0x30;
+ 157   5                SendString(receive_data);
+ 158   5                lcd_show(distance,distance_set);
+ 159   5                delay(12);
+ 160   5                stop();
+ 161   5                delay(400);
+ 162   5                f();                //forward
+ 163   5                receive_data[0] = 'f';
+ 164   5                receive_data[6]=distance_set/100+0x30;
+ 165   5                receive_data[7]=distance_set/10%10+0x30;
+ 166   5                SendString(receive_data);
+ 167   5                lcd_show(distance,distance_set);
+ 168   5                delay(30);
+ 169   5                stop();
+ 170   5                delay(400);
+ 171   5                r();                //right
+ 172   5                receive_data[0] = 'r';
+ 173   5                receive_data[6]=distance_set/100+0x30;
+ 174   5                receive_data[7]=distance_set/10%10+0x30;
+ 175   5                SendString(receive_data);
+ 176   5                lcd_show(distance,distance_set);
+ 177   5                delay(10);
+C51 COMPILER V9.54   MAIN                                                                  12/22/2021 18:33:05 PAGE 4   
+
+ 178   5                stop();
+ 179   5                delay(400);
+ 180   5                
+ 181   5                
+ 182   5      
+ 183   5      
+ 184   5              }     
+ 185   4              else{
+ 186   5                forward1(100);
+ 187   5                receive_data[0] = 'f';
+ 188   5                receive_data[1]='M';
+ 189   5                receive_data[6]=distance_set/100+0x30;
+ 190   5                receive_data[7]=distance_set/10%10+0x30;
+ 191   5                SendString(receive_data);
+ 192   5                lcd_show(distance,distance_set);
+ 193   5      
+ 194   5              }     
+ 195   4            /*
+ 196   4              receive_data[6]=distance_set/100+0x30;
+ 197   4              receive_data[7]=distance_set/10%10+0x30;
+ 198   4              SendString(receive_data);             //将接收到的完整数据返回给发送端
+ 199   4              */
+ 200   4            }
+ 201   3          }
+ 202   2            else{
+ 203   3              //lcd_show(distance,distance_set);
+ 204   3              motor();
+ 205   3            }
+ 206   2      
+ 207   2      //      delay(100);
+ 208   2      
+ 209   2        }
+ 210   1      }
+ 211          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    965    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     37    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

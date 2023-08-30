@@ -1,0 +1,147 @@
+C51 COMPILER V9.54   LCD                                                                   12/22/2021 18:33:06 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LCD
+OBJECT MODULE PLACED IN .\Objects\lcd.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE lcd.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\lcd.lst
+                    -) TABS(2) OBJECT(.\Objects\lcd.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <stdio.h>  // 打印字符串需要调用 stdio.h 库
+   3          #include <intrins.h>
+   4          #include "eeprom.h"
+   5          #include "lcd.h"
+   6          #include "chao.h"
+   7          
+   8          
+   9          unsigned char code table[]={"0123456789"};
+  10          extern uchar receive_data[10];
+  11          //extern long int distance_set;
+  12          
+  13          void lcd_init()   //LCD1602初始化
+  14          {
+  15   1        comwrite(0x38);   //设置16*2显示，8位数据端口
+  16   1        comwrite(0x0c);   //打开显示屏不打开光标
+  17   1        comwrite(0x06);   //显示地址递增，写入一个数据之后，显示位置右移
+  18   1        comwrite(0x01);   //清屏
+  19   1      }
+  20          
+  21          void disp_state()   //显示固定字符
+  22          {
+  23   1        comwrite(0x80);   //设定输入位置
+  24   1        datwrite('S');         //输入用''，不可以用""
+  25   1        datwrite('t');
+  26   1        datwrite('a');
+  27   1        datwrite('t');
+  28   1        datwrite('e');
+  29   1        datwrite(':');
+  30   1        datwrite(receive_data[0]);
+  31   1        
+  32   1        comwrite(0x80+0x07);  
+  33   1        datwrite(' ');
+  34   1        datwrite('S');
+  35   1        datwrite('p');
+  36   1        datwrite('e');
+  37   1        datwrite('e');
+  38   1        datwrite('d');
+  39   1        datwrite(':');
+  40   1        datwrite(receive_data[1]);
+  41   1      }
+  42            
+  43          void disp_distance(){
+  44   1        comwrite(0x80+0x40);   //设定输入位置
+  45   1        datwrite('d');         //输入用''，不可以用""
+  46   1        datwrite('i');
+  47   1        datwrite('s');
+  48   1        datwrite('t');
+  49   1        datwrite('a');
+  50   1        datwrite('n');
+  51   1        datwrite('c');
+  52   1        datwrite('e');
+  53   1        datwrite(':');
+  54   1        comwrite(0x80+0x4c);    //设定输入位置
+C51 COMPILER V9.54   LCD                                                                   12/22/2021 18:33:06 PAGE 2   
+
+  55   1        datwrite('.');
+  56   1        comwrite(0x80+0x4e);    //设定输入位置
+  57   1        datwrite('c');
+  58   1        datwrite('m');
+  59   1      }
+  60          
+  61          void echodisplay(uint x)   //显示距离函数
+  62          {
+  63   1        uchar q,b,s,g;
+  64   1        q=x/1000;            //将测量函数测得的distance分为个位，十位，百位，千位
+  65   1        b=(x/100)%10;
+  66   1        s=(x/10)%10;
+  67   1        g=x%10;
+  68   1        
+  69   1        receive_data[2] = q + 0x30;
+  70   1        receive_data[3] = b + 0x30;
+  71   1        receive_data[4] = s + 0x30;
+  72   1        receive_data[5] = g + 0x30;
+  73   1        
+  74   1        comwrite(0x80+0x49);    //设定输出位置
+  75   1        datwrite(table[q]);     //写入数据
+  76   1        datwrite(table[b]);
+  77   1        datwrite(table[s]);
+  78   1        comwrite(0x80+0x4d);    //设定输入位置
+  79   1        datwrite(table[g]);     //写入数据
+  80   1      }
+  81          
+  82          void display(){       //距离大于设定值，显示"NO obctacles"
+  83   1        comwrite(0x80+0x40);   //设定输入位置
+  84   1        datwrite('N');
+  85   1        datwrite('0');
+  86   1        datwrite(' ');
+  87   1        datwrite('o');
+  88   1        datwrite('b');
+  89   1        datwrite('s');
+  90   1        datwrite('t');
+  91   1        datwrite('a');
+  92   1        datwrite('c');
+  93   1        datwrite('l');
+  94   1        datwrite('e');
+  95   1        datwrite('s');
+  96   1        datwrite(' ');
+  97   1        datwrite(' ');
+  98   1        datwrite(' ');
+  99   1        datwrite(' ');
+ 100   1      }
+ 101          
+ 102          void lcd_show(long int distance,long int distance_set) 
+ 103            {
+ 104   1            if(distance >= distance_set){
+ 105   2              disp_state();
+ 106   2              display();
+ 107   2              receive_data[2] = '$';
+ 108   2              measure_init();//再次初始化测距模块
+ 109   2              delayt(50);//测量间隔50ms
+ 110   2            }
+ 111   1            else{
+ 112   2              disp_state();
+ 113   2              disp_distance();     //显示固定字符
+ 114   2              
+ 115   2              echodisplay(distance);//显示距离distance
+ 116   2              measure_init();//再次初始化测距模块
+C51 COMPILER V9.54   LCD                                                                   12/22/2021 18:33:06 PAGE 3   
+
+ 117   2              delayt(50);//测量间隔50ms
+ 118   2            }
+ 119   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    470    ----
+   CONSTANT SIZE    =     11    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      12
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,9 @@
+".\Objects\STARTUP.obj",
+".\Objects\main.obj",
+".\Objects\serial.obj",
+".\Objects\eeprom.obj",
+".\Objects\lcd.obj",
+".\Objects\chao.obj",
+".\Objects\motor.obj" 
+TO ".\Objects\chao" 
+PRINT(".\Listings\chao.m51") RAMSIZE(256) 

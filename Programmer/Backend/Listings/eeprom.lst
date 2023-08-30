@@ -1,0 +1,169 @@
+C51 COMPILER V9.54   EEPROM                                                                12/22/2021 18:33:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE EEPROM
+OBJECT MODULE PLACED IN .\Objects\eeprom.obj
+COMPILER INVOKED BY: D:\keil5\C51\BIN\C51.EXE eeprom.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\eepr
+                    -om.lst) TABS(2) OBJECT(.\Objects\eeprom.obj)
+
+line level    source
+
+   1          #include <reg52.h>
+   2          #include <stdio.h>
+   3          #include "eeprom.h"
+   4          #include <string.h>
+   5          #include "init.h"
+   6          
+   7          //定义寄存器指令
+   8          void outbyte(unsigned char write_data)
+   9          {
+  10   1           unsigned char i; 
+  11   1            for(i = 0; i < 8; i++)
+  12   1           {
+  13   2            SCK = 0;
+  14   2            SI = (bit)(write_data & 0x80); //传送一个位到SI
+  15   2           write_data <<= 1; 
+  16   2            SCK = 1; 
+  17   2           }
+  18   1            SI = 0; 
+  19   1      } 
+  20          unsigned char inbyte()
+  21          {
+  22   1           unsigned char i;
+  23   1           unsigned char read_data=0;
+  24   1      for(i = 0; i < 8; i++)
+  25   1           {
+  26   2              SCK = 0;
+  27   2              read_data <<= 1;
+  28   2              SCK = 1;
+  29   2              read_data |= (unsigned char)SO; 
+  30   2           }
+  31   1           return read_data;
+  32   1      }
+  33          
+  34          void wren_cmd()
+  35          {
+  36   1        CS = 0;
+  37   1        outbyte(WREN); //传送写入使能指令
+  38   1        CS = 1;
+  39   1      }
+  40          
+  41          void wrdi_cmd()
+  42          {
+  43   1        CS = 0;
+  44   1        outbyte(WRDI); //传送写入禁止指令
+  45   1        CS = 1;
+  46   1      }
+  47          
+  48          unsigned char rdsr_cmd()
+  49          {
+  50   1        unsigned char status;
+  51   1        CS = 0;
+  52   1        outbyte(RDSR);  //传送状态寄存器读取指令
+  53   1        status = inbyte();  //读取状态寄存
+  54   1        CS = 1;
+C51 COMPILER V9.54   EEPROM                                                                12/22/2021 18:33:05 PAGE 2   
+
+  55   1        return status;
+  56   1      }
+  57          
+  58          void wip_poll()
+  59          {
+  60   1        unsigned char i; // 设置最大的查询次数
+  61   1        // 如果WIP位为‘1’并且未达到最大查询次数，则继续查询
+  62   1        // 如果WIP位为‘0’，则写入周期完成，返回
+  63   1        for(i = 0; i < MAX_POLL; i++)
+  64   1        {
+  65   2          if(rdsr_cmd() & 0x01) // 读取状态寄存器
+  66   2          {
+  67   3            continue;
+  68   3          }
+  69   2          return;
+  70   2        }
+  71   1      }
+  72          void wrsr_cmd()
+  73          {
+  74   1        CS = 0;
+  75   1        outbyte(WRSR); // 传送状态寄存器写入指令
+  76   1        outbyte(STATUS_REG); // 传送要写入的数据
+  77   1        CS = 1;
+  78   1        wip_poll(); // 检测写入进度
+  79   1      }
+  80          void byte_write(unsigned int addr, unsigned char dat)
+  81          {
+  82   1        wren_cmd();
+  83   1        CS = 0;
+  84   1        //if(addr & 0x100)
+  85   1        //outbyte(WRITE | 0x08); // 传送写入指令和地址最高位‘1’
+  86   1        //else
+  87   1        outbyte(WRITE); // 传送写入指令和地址最高位‘0’
+  88   1        outbyte(addr); // 传送地址低字节
+  89   1        outbyte(dat); // 传送数据字节
+  90   1      
+  91   1        CS = 1;
+  92   1        wip_poll(); // 检测写入进度
+  93   1      }
+  94          
+  95          unsigned char byte_read(unsigned int addr)
+  96          {
+  97   1        unsigned char read_data;
+  98   1        CS = 0;
+  99   1        
+ 100   1        if(addr & 0x100)
+ 101   1          outbyte(READ | 0x08); // 传送读取指令和地址最高位‘1’
+ 102   1        else
+ 103   1          outbyte(READ); // 传送读取指令和地址最高位‘0’
+ 104   1      
+ 105   1        outbyte(addr); // 传送地址低字节
+ 106   1        read_data = inbyte(); // 读取字节
+ 107   1        CS = 1;
+ 108   1        
+ 109   1        return read_data;
+ 110   1      }
+ 111          
+ 112          //void rst_wdog()
+ 113          //{
+ 114          //CS = 0;
+ 115          //_nop_();
+ 116          //_nop_();
+C51 COMPILER V9.54   EEPROM                                                                12/22/2021 18:33:05 PAGE 3   
+
+ 117          //CS = 1;
+ 118          //}
+ 119          
+ 120          
+ 121          void comwrite(uchar com)   //写指令函数
+ 122          {
+ 123   1        rs=0;   //选择指令寄存器
+ 124   1        rw=0;   //选择写
+ 125   1        P0=com; //输入指令
+ 126   1        delay(5);
+ 127   1        en=1;  //使能端打开
+ 128   1        en=0;  //使能端关闭
+ 129   1      }
+ 130          
+ 131          void datwrite(uchar dat)   //写数据函数
+ 132          {
+ 133   1        rs=1;    //选择数据寄存器
+ 134   1        rw=0;    //选择写
+ 135   1        P0=dat;  //输入数据
+ 136   1        delay(5);
+ 137   1        en=1;    //使能端打开
+ 138   1        en=0;    //使能端关闭
+ 139   1      }
+ 140          
+ 141          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    202    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
